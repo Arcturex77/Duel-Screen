@@ -56,16 +56,19 @@ static const char *staticStrings[] = {
 
 C2D_TextBuf textBuffer, debugBuffer;
 C2D_Text text[sizeof(staticStrings)/sizeof(staticStrings[0])];
+C2D_Font font;
 
 //init text
 static void staticTextInit(void)
 {
+	font = C2D_FontLoad("romfs:/dimurphic.bcfnt");
+	
 	//create text buffer for 2048 total glyphs
 	textBuffer = C2D_TextBufNew(2048);
 	
 	//parse string to C2D stuff (and optimize)
 	for(int i = 0; i < sizeof(staticStrings)/sizeof(staticStrings[0]); i++){
-		C2D_TextParse(&text[i], textBuffer, staticStrings[i]);
+		C2D_TextFontParse(&text[i], font, textBuffer, staticStrings[i]);
 		C2D_TextOptimize(&text[i]);
 	}
 }
@@ -331,7 +334,7 @@ int main(int argc, char **argv)
 		);
 		C2D_TextParse(&debugText, debugBuffer, buf);
 		C2D_TextOptimize(&debugText);
-		C2D_DrawText(&debugText, C2D_WithColor, 3.0f, 3.0f, 0.0f, 0.5f, 0.5f, clrWhite);
+		C2D_DrawText(&debugText, C2D_WithColor, 3.0f, 3.0f, 0.0f, 1.0f, 1.0f, clrWhite);
 
 		//draw buttons
 		for(int i = 0; i < sizeof(buttons)/sizeof(buttons[0]); i++){
