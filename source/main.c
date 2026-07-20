@@ -9,6 +9,25 @@
 #define SCREEN_HEIGHT 240
 #define BOTTOM_SCREEN_WIDTH 320
 
+//player data struct
+typedef struct
+{
+	int life, commanderDamage[2], poison;
+} PlayerData;
+
+//populate player data starting values
+PlayerData players[3];
+void initPlayers(void)
+{
+	for (int i = 0; i < 3; i++){
+		players[i].life = 40;
+		players[i].poison = 0;
+		for (int ii = 0; i < 2; i++){
+			players[i].commanderDamage[ii] = 0;
+		}
+	}
+}
+
 //sprite struct
 typedef struct
 {
@@ -68,7 +87,7 @@ void drawBox(int x, int y, int w, int h, int thickness, u32 col)
 u32 down, held;
 touchPosition touch;
 
-void readInputs()
+void readInputs(void)
 {
 	//Scan all the inputs. This should be done once for each frame
 	hidScanInput();
@@ -184,8 +203,6 @@ void buttonDraw(Button* b)
 }
 
 //button pressed function(s)
-
-int life = 40; //placeholder life total
 void incrimentInt(void *data){
 	int *v = data;
 	(*v)++;
@@ -231,6 +248,9 @@ int main(int argc, char **argv)
 	staticTextInit();
 	debugBuffer = C2D_TextBufNew(1028);
 
+	initPlayers();
+
+
 	//make the buttons exist
 	Button buttons[]={
 		//Incriment life
@@ -241,7 +261,7 @@ int main(int argc, char **argv)
 			clrBlue,
 			0,
 			incrimentInt,
-			&life
+			&players[0].life
 		),
 		//decriment life
 		makeButton(
@@ -251,7 +271,7 @@ int main(int argc, char **argv)
 			clrBlue,
 			1,
 			decrimentInt,
-			&life
+			&players[0].life
 		)
 	};
 	
@@ -307,7 +327,7 @@ int main(int argc, char **argv)
 			C3D_GetProcessingTime()*6.0f,
 			C3D_GetDrawingTime()*6.0f,
 			C3D_GetCmdBufUsage()*100.0f,
-			life
+			players[0].life
 		);
 		C2D_TextParse(&debugText, debugBuffer, buf);
 		C2D_TextOptimize(&debugText);
