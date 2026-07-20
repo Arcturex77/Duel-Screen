@@ -51,6 +51,19 @@ static void staticTextInit(void)
 	}
 }
 
+//drawing shortcuts
+void drawBox(int x, int y, int w, int h, int thickness, u32 col)
+{
+	//top arm
+	C2D_DrawRectSolid(x, y, 0.0f, w, thickness, col);
+	//left arm
+	C2D_DrawRectSolid(x, y, 0.0f, thickness, h, col);
+	//right arm
+	C2D_DrawRectSolid(x + w - thickness, y, 0.0f, thickness, h, col);
+	//bottom arm
+	C2D_DrawRectSolid(x, y + h - thickness, 0.0f, w, thickness, col);
+}
+
 //input reading
 u32 down, held;
 touchPosition touch;
@@ -83,7 +96,8 @@ typedef struct
 	bool pressed;
 
 	int textIndex;
-	void (*onPress)(void);
+	void (*onPress)(void *);
+	void *data;
 } Button;
 
 Button makeButton(
@@ -94,7 +108,8 @@ Button makeButton(
 	u32 c1,
 	u32 c2,
 	int text,
-	void (*onPress)(void))
+	void (*onPress)(void *),
+	void *data)
 {
 	Button b;
 
@@ -108,6 +123,7 @@ Button makeButton(
 
 	b.textIndex = text;
 	b.onPress = onPress;
+	b.data = data;
 
 	b.pressed = false;
 
@@ -147,7 +163,7 @@ void buttonUpdate(Button* b)
 	{
 		if (buttonContains(b, touch.px, touch.py))
 		{
-			b->onPress();
+			b->onPress(b->data);
 		}
 	}
 }
@@ -172,15 +188,15 @@ void buttonDraw(Button* b)
 void doNothing(void){}
 
 int life = 40; //placeholder life total
-void incrimentLife(void){
-	life++;
+void incrimentInt(void *data){
+	int *v = data;
+	(*v)++;
 }
 
-void decrimentLife(void){
-	life--;
+void decrimentInt(void *data){
+	int *v = data;
+	(*v)--;
 }
-//------------------------------------------------------------------------------------
-
 
 //------------------------------------------------------------------------------------
 //MAIN
@@ -202,7 +218,7 @@ int main(int argc, char **argv)
 	// color shorthands
 	u32 clrWhite = C2D_Color32(255, 255, 255, 255);
 	u32 clrGreen = C2D_Color32(0, 255, 0, 255);
-	//u32 clrRed   = C2D_Color32(255, 0, 0, 255);
+	u32 clrRed   = C2D_Color32(255, 0, 0, 255);
 	u32 clrBlue  = C2D_Color32(0, 0, 255, 255);
 	u32 clrBlack = C2D_Color32(0, 0, 0, 255);
 
@@ -226,7 +242,8 @@ int main(int argc, char **argv)
 			clrGreen,
 			clrBlue,
 			0,
-			incrimentLife
+			incrimentInt,
+			&life
 		),
 		//decriment life
 		makeButton(
@@ -235,7 +252,8 @@ int main(int argc, char **argv)
 			clrGreen,
 			clrBlue,
 			1,
-			decrimentLife
+			decrimentInt,
+			&life
 		)
 	};
 	
@@ -274,6 +292,8 @@ int main(int argc, char **argv)
 		C2D_DrawRectSolid(0.0f, 120.0f, 0.0f, 200.0f, 120.0f, C2D_Color32(245, 228, 154, 23));//yellow
 		C2D_DrawRectSolid(200.0f, 120.0f, 0.0f, 200.0f, 120.0f, C2D_Color32(52, 134, 0, 23));//green
 		
+
+		drawBox(50, 50, 100, 50, 5, clrRed);
 		//------------------------------------------------------------------------------------
 		//bottom screeen
 		C2D_TargetClear(bottom, clrBlack);
