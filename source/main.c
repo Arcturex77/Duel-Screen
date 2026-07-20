@@ -185,8 +185,6 @@ void buttonDraw(Button* b)
 
 //button pressed function(s)
 
-void doNothing(void){}
-
 int life = 40; //placeholder life total
 void incrimentInt(void *data){
 	int *v = data;
