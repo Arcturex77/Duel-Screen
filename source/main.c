@@ -9,7 +9,13 @@
 #define SCREEN_HEIGHT 240
 #define BOTTOM_SCREEN_WIDTH 320
 
-
+//sprite struct
+typedef struct
+{
+	C2D_Sprite spr; //create C2D sprite thingy
+	float x, y; //location
+	int spriteIndex; //sprite sheet index
+} Sprite;
 
 static C2D_SpriteSheet spriteSheet; //create sheet object
 static Sprite sprites[768]; //make sprites array
@@ -33,7 +39,7 @@ C2D_TextBuf textBuffer, debugBuffer;
 C2D_Text text[sizeof(staticStrings)/sizeof(staticStrings[0])];
 
 //init text
-void staticTextInit(void)
+static void staticTextInit(void)
 {
 	//create text buffer for 2048 total glyphs
 	textBuffer = C2D_TextBufNew(2048);
@@ -175,12 +181,19 @@ void decrimentLife(void){
 }
 //------------------------------------------------------------------------------------
 
+
 //------------------------------------------------------------------------------------
 //MAIN
 //------------------------------------------------------------------------------------
+
 int main(int argc, char **argv)
 {
-	
+	// Initialize the libs
+	romfsInit();
+	gfxInitDefault();
+	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+	C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
+	C2D_Prepare();
 
 	// Create screens
 	C3D_RenderTarget* top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
@@ -243,7 +256,8 @@ int main(int argc, char **argv)
 		
 		//------------------------------------------------------------------------------------
 		//rendering start
-		//------------------------------------------------------------------------------------\
+		//------------------------------------------------------------------------------------
+		C2D_Prepare();
 		C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_ALL);
 		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 		
@@ -303,4 +317,3 @@ int main(int argc, char **argv)
 	romfsExit();
 	return 0;
 }
-
