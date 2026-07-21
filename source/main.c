@@ -16,13 +16,14 @@ typedef struct
 } PlayerData;
 
 //populate player data starting values
-PlayerData players[3];
+PlayerData players[4];
 void initPlayers(void)
 {
-	for (int i = 0; i < 3; i++){
+	for (int i = 0; i < 4; i++){
+
 		players[i].life = 40;
 		players[i].poison = 0;
-		for (int ii = 0; i < 2; i++){
+		for (int ii = 0; ii < 2; ii++){
 			players[i].commanderDamage[ii] = 0;
 		}
 	}
@@ -54,7 +55,7 @@ static const char *staticStrings[] = {
 	"-"
 };
 
-C2D_TextBuf textBuffer, debugBuffer;
+C2D_TextBuf textBuffer, dynamicBuffer;
 C2D_Text text[sizeof(staticStrings)/sizeof(staticStrings[0])];
 C2D_Font font;
 
@@ -235,10 +236,12 @@ int main(int argc, char **argv)
 	
 	// color shorthands
 	u32 clrWhite = C2D_Color32(255, 255, 255, 255);
-	u32 clrGreen = C2D_Color32(0, 255, 0, 255);
-	u32 clrRed   = C2D_Color32(255, 0, 0, 255);
-	u32 clrBlue  = C2D_Color32(0, 0, 255, 255);
 	u32 clrBlack = C2D_Color32(0, 0, 0, 255);
+	u32 clrOldWhite = C2D_Color32(231, 196, 119,255);
+	u32 clrOldRed = C2D_Color32(216, 97, 45, 255);
+	u32 clrOldGreen = C2D_Color32(131, 151, 0, 255);
+	u32 clrOldBlue = C2D_Color32(53, 170, 181, 255);
+	u32 clrBrown = C2D_Color32(96, 86, 50, 255);
 
 	//init sprite stuff
 	spriteSheet = C2D_SpriteSheetLoad("romfs:/gfx/sprites.t3x");
@@ -249,32 +252,84 @@ int main(int argc, char **argv)
 
 	//init text
 	staticTextInit();
-	debugBuffer = C2D_TextBufNew(1028);
+	dynamicBuffer = C2D_TextBufNew(2048);
 
 	initPlayers();
 
 
 	//make the buttons exist
 	Button buttons[]={
-		//Incriment life
-		makeButton(
-			20, 80,
-			20, 20,
-			clrGreen,
-			clrBlue,
+		makeButton(//player 1 +
+			10, 10,
+			65, 80,
+			clrOldRed,
+			clrBrown,
 			0,
 			incrimentInt,
 			&players[0].life
 		),
-		//decriment life
-		makeButton(
-			50, 80,
-			20, 20,
-			clrGreen,
-			clrBlue,
+		makeButton(//player 1 -
+			80, 10,
+			65, 80,
+			clrOldRed,
+			clrBrown,
 			1,
 			decrimentInt,
 			&players[0].life
+		),
+		makeButton(//player 2 +
+			170, 10,
+			65, 80,
+			clrOldBlue,
+			clrBrown,
+			0,
+			incrimentInt,
+			&players[1].life
+		),
+		makeButton(//player 2 -
+			240, 10,
+			65, 80,
+			clrOldBlue,
+			clrBrown,
+			1,
+			decrimentInt,
+			&players[1].life
+		),
+		makeButton(//player 3 +
+			10, 100,
+			65, 80,
+			clrOldWhite,
+			clrBrown,
+			0,
+			incrimentInt,
+			&players[2].life
+		),
+		makeButton(//player 3 -
+			80, 100,
+			65, 80,
+			clrOldWhite,
+			clrBrown,
+			1,
+			decrimentInt,
+			&players[2].life
+		),
+		makeButton(//player 4 +
+			170, 100,
+			65, 80,
+			clrOldGreen,
+			clrBrown,
+			0,
+			incrimentInt,
+			&players[3].life
+		),
+		makeButton(//player 4 -
+			240, 100,
+			65, 80,
+			clrOldGreen,
+			clrBrown,
+			1,
+			decrimentInt,
+			&players[3].life
 		)
 	};
 	
@@ -299,7 +354,10 @@ int main(int argc, char **argv)
 		C2D_Prepare();
 		C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_ALL);
 		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-		
+
+		//draw dynamic text
+		C2D_TextBufClear(dynamicBuffer);
+
 		//------------------------------------------------------------------------------------
 		//top screen
 		C2D_TargetClear(top, clrBlack);
@@ -312,17 +370,33 @@ int main(int argc, char **argv)
 		C2D_DrawRectSolid(200.0f, 0.0f, 0.0f, 200.0f, 120.0f, C2D_Color32(0, 114, 255, 23));//blue
 		C2D_DrawRectSolid(0.0f, 120.0f, 0.0f, 200.0f, 120.0f, C2D_Color32(245, 228, 154, 23));//yellow
 		C2D_DrawRectSolid(200.0f, 120.0f, 0.0f, 200.0f, 120.0f, C2D_Color32(52, 134, 0, 23));//green
+
+		//numbers
+		char numberBuf[1024];
+		C2D_Text playerLifeText[4];
+
+		//loop through all 4 players
+		for (int i = 0; i < 4; i++){
+			snprintf(numberBuf, sizeof(numberBuf), "%d", players[i].life);
+			C2D_TextFontParse(&playerLifeText[i], font, dynamicBuffer, numberBuf);
+			C2D_TextOptimize(&playerLifeText[i]);
+		}
+
+		C2D_DrawText(&playerLifeText[0], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 100.0f, 40.0f, 0.0f, -3.0f, -3.0f, clrBlack);
+		C2D_DrawText(&playerLifeText[1], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 300.0f, 40.0f, 0.0f, -3.0f, -3.0f, clrBlack);
+		C2D_DrawText(&playerLifeText[2], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 100.0f, 200.0f, 0.0f, 3.0f, 3.0f, clrBlack);
+		C2D_DrawText(&playerLifeText[3], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 300.0f, 200.0f, 0.0f, 3.0f, 3.0f, clrBlack);
 		
 
-		drawBox(50, 50, 100, 50, 5, clrRed);
+		//drawBox(50, 50, 100, 50, 5, clrRed);
 		//------------------------------------------------------------------------------------
 		//bottom screeen
 		C2D_TargetClear(bottom, clrBlack);
 		C2D_SceneBegin(bottom);
 
-		//draw debug text
-		C2D_TextBufClear(debugBuffer);
-
+		
+		//debug text
+		/*
 		char buf[160];
 		C2D_Text debugText;
 		snprintf(buf, sizeof(buf),
@@ -332,9 +406,10 @@ int main(int argc, char **argv)
 			C3D_GetCmdBufUsage()*100.0f,
 			players[0].life
 		);
-		C2D_TextParse(&debugText, debugBuffer, buf);
+		C2D_TextParse(&debugText, dynamicBuffer, buf);
 		C2D_TextOptimize(&debugText);
 		C2D_DrawText(&debugText, C2D_WithColor, 3.0f, 3.0f, 0.0f, 1.0f, 1.0f, clrWhite);
+		*/
 
 		//draw buttons
 		for(int i = 0; i < sizeof(buttons)/sizeof(buttons[0]); i++){
