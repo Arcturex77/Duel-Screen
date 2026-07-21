@@ -38,11 +38,12 @@ DATA		:=	data
 INCLUDES	:=	include
 GRAPHICS	:=	gfx
 GFXBUILD	:=	$(BUILD)
+APP_TITLE   :=  3DuelScreen
 APP_AUTHOR  :=  Arcturex77
 APP_DESCRIPTION  :=  A simple life tracker for 'Magic: The Gathering'
 ROMFS		:=	romfs
 GFXBUILD	:=	$(ROMFS)/gfx
-
+ICON        :=  gfx/icon.png
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
@@ -165,7 +166,6 @@ endif
 #---------------------------------------------------------------------------------
 all: $(BUILD) $(GFXBUILD) $(DEPSDIR) $(ROMFS_T3XFILES) $(T3XHFILES)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@rm -f $(OUTPUT).elf
 
 $(BUILD):
 	@mkdir -p $@
