@@ -5,6 +5,9 @@
 #include <3ds.h>
 #include <citro2d.h>
 
+
+
+
 #define TOP_SCREEN_WIDTH 400
 #define SCREEN_HEIGHT 240
 #define BOTTOM_SCREEN_WIDTH 320
