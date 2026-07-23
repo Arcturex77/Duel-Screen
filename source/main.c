@@ -203,7 +203,7 @@ void buttonDraw(Button* b)
 	);
 
 	//TODO: FIX TEXT SO IT RENDERS VERTICALLY IN THE CENTER USING DEFAULT FONT SIZE
-	C2D_DrawText(&text[b->textIndex], C2D_AlignCenter | C2D_AtBaseline, b->x + (b->width / 2), b->y + (b->height / 2), 0.0f, 0.5f, 0.5f);
+	C2D_DrawText(&text[b->textIndex], C2D_AlignCenter | C2D_AtBaseline, b->x + (b->width / 2), b->y + (b->height / 2), 0.0f, 1.0f, 1.0f);
 }
 
 //button pressed function(s)
