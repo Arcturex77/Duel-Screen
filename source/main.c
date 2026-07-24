@@ -355,7 +355,7 @@ int main(int argc, char **argv)
 			10, 190,
 			150, 40,
 			clrWhite,
-			clrBlack,
+			clrBrown,
 			2,
 			0.5f,
 			incrimentInt,
