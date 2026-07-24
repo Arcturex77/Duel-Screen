@@ -38,12 +38,9 @@ DATA		:=	data
 INCLUDES	:=	include
 GRAPHICS	:=	gfx
 GFXBUILD	:=	$(BUILD)
-APP_TITLE   :=  Duel Screen
-APP_AUTHOR  :=  Arcturex77
-APP_DESCRIPTION  :=  A simple life tracker for 'Magic: The Gathering'
 ROMFS		:=	romfs
 GFXBUILD	:=	$(ROMFS)/gfx
-ICON        :=  icon.png
+NO_SMDH 	:=  ok
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
