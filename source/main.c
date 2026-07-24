@@ -52,7 +52,8 @@ void initSprite(int spriteIndex, float x, float y)
 //initializing text and text buffer for C2D
 static const char *staticStrings[] = {
 	"+",
-	"-"
+	"-",
+	"Commander Damage"
 };
 
 C2D_TextBuf textBuffer, dynamicBuffer;
@@ -119,6 +120,8 @@ typedef struct
 	bool pressed;
 
 	int textIndex;
+	float textScale;
+
 	void (*onPress)(void *);
 	void *data;
 } Button;
@@ -131,6 +134,7 @@ Button makeButton(
 	u32 c1,
 	u32 c2,
 	int text,
+	float scale,
 	void (*onPress)(void *),
 	void *data)
 {
@@ -145,6 +149,8 @@ Button makeButton(
 	b.color2 = c2;
 
 	b.textIndex = text;
+	b.textScale = scale;
+
 	b.onPress = onPress;
 	b.data = data;
 
@@ -191,6 +197,7 @@ void buttonUpdate(Button* b)
 	}
 }
 
+
 void buttonDraw(Button* b)
 {
 	u32 col = b->pressed ? b->color2 : b->color1;
@@ -202,8 +209,11 @@ void buttonDraw(Button* b)
 		col
 	);
 
-	//TODO: FIX TEXT SO IT RENDERS VERTICALLY IN THE CENTER USING DEFAULT FONT SIZE
-	C2D_DrawText(&text[b->textIndex], C2D_AlignCenter | C2D_AtBaseline, b->x + (b->width / 2), b->y + (b->height / 2), 0.0f, 1.0f, 1.0f);
+	float textWidth, textHeight;
+	C2D_TextGetDimensions(&text[b->textIndex], b->textScale, b->textScale, &textWidth, &textHeight);
+	float textYOffset = (textHeight) / 8;
+
+	C2D_DrawText(&text[b->textIndex], C2D_AlignCenter | C2D_AtBaseline, b->x + (b->width / 2), b->y + ((b->height / 2)+textYOffset), 0.0f, b->textScale, b->textScale);
 }
 
 //button pressed function(s)
@@ -216,6 +226,8 @@ void decrimentInt(void *data){
 	int *v = data;
 	(*v)--;
 }
+
+int buttonState = 0;
 
 //------------------------------------------------------------------------------------
 //MAIN
@@ -248,7 +260,7 @@ int main(int argc, char **argv)
 	if (!spriteSheet) svcBreak(USERBREAK_PANIC);
 
 	initSprite(0, TOP_SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
-	initSprite(1, 140, 210);
+	initSprite(1, 50, 50);
 
 	//init text
 	staticTextInit();
@@ -256,15 +268,16 @@ int main(int argc, char **argv)
 
 	initPlayers();
 
-
+	//TODO: make buttons in different array 'batches', only draw and update buttons if specific batch is active
 	//make the buttons exist
-	Button buttons[]={
+	Button buttonsDefault[]={
 		makeButton(//player 1 +
 			10, 10,
 			65, 80,
 			clrOldRed,
 			clrBrown,
 			0,
+			2.0f,
 			incrimentInt,
 			&players[0].life
 		),
@@ -274,6 +287,7 @@ int main(int argc, char **argv)
 			clrOldRed,
 			clrBrown,
 			1,
+			2.0f,
 			decrimentInt,
 			&players[0].life
 		),
@@ -283,6 +297,7 @@ int main(int argc, char **argv)
 			clrOldBlue,
 			clrBrown,
 			0,
+			2.0f,
 			incrimentInt,
 			&players[1].life
 		),
@@ -292,6 +307,7 @@ int main(int argc, char **argv)
 			clrOldBlue,
 			clrBrown,
 			1,
+			2.0f,
 			decrimentInt,
 			&players[1].life
 		),
@@ -301,6 +317,7 @@ int main(int argc, char **argv)
 			clrOldWhite,
 			clrBrown,
 			0,
+			2.0f,
 			incrimentInt,
 			&players[2].life
 		),
@@ -310,6 +327,7 @@ int main(int argc, char **argv)
 			clrOldWhite,
 			clrBrown,
 			1,
+			2.0f,
 			decrimentInt,
 			&players[2].life
 		),
@@ -319,6 +337,7 @@ int main(int argc, char **argv)
 			clrOldGreen,
 			clrBrown,
 			0,
+			2.0f,
 			incrimentInt,
 			&players[3].life
 		),
@@ -328,10 +347,22 @@ int main(int argc, char **argv)
 			clrOldGreen,
 			clrBrown,
 			1,
+			2.0f,
 			decrimentInt,
 			&players[3].life
+		),
+		makeButton(//commander damage toggle
+			10, 190,
+			150, 40,
+			clrWhite,
+			clrBlack,
+			2,
+			0.5f,
+			incrimentInt,
+			&buttonState
 		)
 	};
+
 	
 
 	// Main loop
@@ -342,8 +373,8 @@ int main(int argc, char **argv)
 		if (down & KEY_START) break; // break in order to return to hbmenu
 
 		//update buttons
-		for(int i = 0; i < sizeof(buttons)/sizeof(buttons[0]); i++){
-			buttonUpdate(&buttons[i]);
+		for(int i = 0; i < sizeof(buttonsDefault)/sizeof(buttonsDefault[0]); i++){
+			buttonUpdate(&buttonsDefault[i]);
 		};
 
 
@@ -394,29 +425,25 @@ int main(int argc, char **argv)
 		C2D_TargetClear(bottom, clrBlack);
 		C2D_SceneBegin(bottom);
 
-		
-		//debug text
-		/*
+		//draw buttons
+		for(int i = 0; i < sizeof(buttonsDefault)/sizeof(buttonsDefault[0]); i++){
+			buttonDraw(&buttonsDefault[i]);
+		};
+
 		char buf[160];
 		C2D_Text debugText;
 		snprintf(buf, sizeof(buf),
-			"CPU:     %6.2f%%\nGPU:     %6.2f%%\nCmdBuf:  %6.2f%%\nLife: %d", 
+			"CPU:     %6.2f%%\nGPU:     %6.2f%%\nCmdBuf:  %6.2f%%\n", 
 			C3D_GetProcessingTime()*6.0f,
 			C3D_GetDrawingTime()*6.0f,
-			C3D_GetCmdBufUsage()*100.0f,
-			players[0].life
+			C3D_GetCmdBufUsage()*100.0f
 		);
 		C2D_TextParse(&debugText, dynamicBuffer, buf);
 		C2D_TextOptimize(&debugText);
-		C2D_DrawText(&debugText, C2D_WithColor, 3.0f, 3.0f, 0.0f, 1.0f, 1.0f, clrWhite);
-		*/
+		C2D_DrawText(&debugText, C2D_WithColor, 3.0f, 3.0f, 0.0f, 0.75f, 0.75f, clrWhite);
+		
 
-		//draw buttons
-		for(int i = 0; i < sizeof(buttons)/sizeof(buttons[0]); i++){
-			buttonDraw(&buttons[i]);
-		};
-
-		C2D_DrawSprite(&sprites[1].spr);
+		//C2D_DrawSprite(&sprites[1].spr);
 		
 		C3D_FrameEnd(0);
 		
