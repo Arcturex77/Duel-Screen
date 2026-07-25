@@ -53,7 +53,8 @@ void initSprite(int spriteIndex, float x, float y)
 static const char *staticStrings[] = {
 	"+",
 	"-",
-	"Commander Damage"
+	"Commander Damage",
+	"x"
 };
 
 C2D_TextBuf textBuffer, dynamicBuffer;
@@ -79,13 +80,13 @@ static void staticTextInit(void)
 void drawBox(int x, int y, int w, int h, int thickness, u32 col)
 {
 	//top arm
-	C2D_DrawRectSolid(x, y, 0.0f, w, thickness, col);
+	C2D_DrawRectSolid(x, y, 0.0f, w, thickness - 1, col);
 	//left arm
-	C2D_DrawRectSolid(x, y, 0.0f, thickness, h, col);
+	C2D_DrawRectSolid(x, y, 0.0f, thickness - 1, h, col);
 	//right arm
-	C2D_DrawRectSolid(x + w - thickness, y, 0.0f, thickness, h, col);
+	C2D_DrawRectSolid(x + w - thickness + 1, y, 0.0f, thickness - 1, h, col);
 	//bottom arm
-	C2D_DrawRectSolid(x, y + h - thickness, 0.0f, w, thickness, col);
+	C2D_DrawRectSolid(x, y + h - thickness + 1, 0.0f, w, thickness - 1, col);
 }
 
 //input reading
@@ -117,13 +118,13 @@ typedef struct
 	u32 color1;
 	u32 color2;
 
-	bool pressed;
-
 	int textIndex;
 	float textScale;
 
 	void (*onPress)(void *);
 	void *data;
+
+	bool pressed;
 } Button;
 
 Button makeButton(
@@ -170,50 +171,58 @@ bool buttonContains(Button* b, int x, int y)
 	);
 }
 
-void buttonUpdate(Button* b)
+void buttonUpdate(Button buttons[], int count)
 {
-	if (held & KEY_TOUCH)
+	for (int  i = 0; i < count; i++)
 	{
-		if (buttonContains(b, touch.px, touch.py))
+		Button* b = &buttons[i];
+		if (held & KEY_TOUCH)
 		{
-			b->pressed = true;
+			if (buttonContains(b, touch.px, touch.py))
+			{
+				b->pressed = true;
+			}
+			else 
+			{
+				b->pressed = false;
+			}
 		}
-		else 
+		else
 		{
 			b->pressed = false;
 		}
-	}
-	else
-	{
-		b->pressed = false;
-	}
 
-	if (down & KEY_TOUCH)
-	{
-		if (buttonContains(b, touch.px, touch.py))
+		if (down & KEY_TOUCH)
 		{
-			b->onPress(b->data);
+			if (buttonContains(b, touch.px, touch.py))
+			{
+				b->onPress(b->data);
+			}
 		}
 	}
 }
 
-
-void buttonDraw(Button* b)
+void buttonDraw(Button buttons[], int count)
 {
-	u32 col = b->pressed ? b->color2 : b->color1;
+	for (int i = 0; i < count; i++)
+	{
+		Button* b = &buttons[i];
 
-	C2D_DrawRectSolid(
-		b->x, b->y,
-		0.0f,
-		b->width, b->height,
-		col
-	);
+		u32 col = b->pressed ? b->color2 : b->color1;
 
-	float textWidth, textHeight;
-	C2D_TextGetDimensions(&text[b->textIndex], b->textScale, b->textScale, &textWidth, &textHeight);
-	float textYOffset = (textHeight) / 8;
+		C2D_DrawRectSolid(
+			b->x, b->y,
+			0.0f,
+			b->width, b->height,
+			col
+		);
 
-	C2D_DrawText(&text[b->textIndex], C2D_AlignCenter | C2D_AtBaseline, b->x + (b->width / 2), b->y + ((b->height / 2)+textYOffset), 0.0f, b->textScale, b->textScale);
+		float textWidth, textHeight;
+		C2D_TextGetDimensions(&text[b->textIndex], b->textScale, b->textScale, &textWidth, &textHeight);
+		float textYOffset = (textHeight) / 6;
+
+		C2D_DrawText(&text[b->textIndex], C2D_AlignCenter | C2D_AtBaseline, b->x + (b->width / 2), b->y + ((b->height / 2)+textYOffset), 0.0f, b->textScale, b->textScale);
+	}
 }
 
 //button pressed function(s)
@@ -225,6 +234,13 @@ void incrimentInt(void *data){
 void decrimentInt(void *data){
 	int *v = data;
 	(*v)--;
+}
+
+void commanderToggle(void *data){
+	int *v = data;
+	if ((*v) == 0){
+		(*v) = 1;
+	} else {(*v) = 0;}
 }
 
 int buttonState = 0;
@@ -254,6 +270,7 @@ int main(int argc, char **argv)
 	u32 clrOldGreen = C2D_Color32(131, 151, 0, 255);
 	u32 clrOldBlue = C2D_Color32(53, 170, 181, 255);
 	u32 clrBrown = C2D_Color32(96, 86, 50, 255);
+	u32 clrTransRed = C2D_Color32(216, 97, 45, 100);
 
 	//init sprite stuff
 	spriteSheet = C2D_SpriteSheetLoad("romfs:/gfx/sprites.t3x");
@@ -358,11 +375,26 @@ int main(int argc, char **argv)
 			clrBrown,
 			2,
 			0.5f,
-			incrimentInt,
+			commanderToggle,
 			&buttonState
 		)
 	};
 
+	Button buttonsCDamage[]={
+		makeButton(
+			210, 10,
+			20, 20,
+			clrTransRed,
+			clrOldRed,
+			3,
+			1.0f,
+			commanderToggle,
+			&buttonState
+		)
+	};
+
+	int buttonsDefaultSize = sizeof(buttonsDefault)/sizeof(buttonsDefault[0]);
+	int buttonsCDamageSize = sizeof(buttonsCDamage)/sizeof(buttonsCDamage[0]);
 	
 
 	// Main loop
@@ -372,11 +404,13 @@ int main(int argc, char **argv)
 
 		if (down & KEY_START) break; // break in order to return to hbmenu
 
-		//update buttons
-		for(int i = 0; i < sizeof(buttonsDefault)/sizeof(buttonsDefault[0]); i++){
-			buttonUpdate(&buttonsDefault[i]);
-		};
-
+		//buttons update
+		if (buttonState == 0){
+			buttonUpdate(buttonsDefault, buttonsDefaultSize);
+		} else if(buttonState == 1) {
+			buttonUpdate(buttonsCDamage, buttonsCDamageSize);
+		}
+		
 
 		
 		//------------------------------------------------------------------------------------
@@ -421,14 +455,22 @@ int main(int argc, char **argv)
 
 		//drawBox(50, 50, 100, 50, 5, clrRed);
 		//------------------------------------------------------------------------------------
-		//bottom screeen
+		//bottom screen
 		C2D_TargetClear(bottom, clrBlack);
 		C2D_SceneBegin(bottom);
 
+		//draw borders
+		drawBox(0, 0, BOTTOM_SCREEN_WIDTH, SCREEN_HEIGHT, 6, clrWhite);
+		C2D_DrawRectSolid((BOTTOM_SCREEN_WIDTH / 2) - 3, 0, 0.0f, 6, SCREEN_HEIGHT, clrWhite);
+		C2D_DrawRectSolid(0, SCREEN_HEIGHT - 62, 0.0f, BOTTOM_SCREEN_WIDTH, 6, clrWhite); //bottom section, 50px high
+		C2D_DrawRectSolid(0, (SCREEN_HEIGHT - 62) / 2, 0.0f, BOTTOM_SCREEN_WIDTH, 6, clrWhite);//main section horiz., 83px high
+
 		//draw buttons
-		for(int i = 0; i < sizeof(buttonsDefault)/sizeof(buttonsDefault[0]); i++){
-			buttonDraw(&buttonsDefault[i]);
-		};
+		if (buttonState == 0){
+			buttonDraw(buttonsDefault, buttonsDefaultSize);
+		} else if (buttonState == 1){
+			buttonDraw(buttonsCDamage, buttonsCDamageSize);
+		}
 
 		char buf[160];
 		C2D_Text debugText;

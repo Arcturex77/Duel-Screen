@@ -38,9 +38,13 @@ DATA		:=	data
 INCLUDES	:=	include
 GRAPHICS	:=	gfx
 GFXBUILD	:=	$(BUILD)
+APP_TITLE   :=  Duel Screen
+APP_AUTHOR  :=  Arcturex77
+APP_DESCRIPTION  :=  A simple MTG life tracker
 ROMFS		:=	romfs
 GFXBUILD	:=	$(ROMFS)/gfx
-NO_SMDH 	:=  ok
+ICON        :=  icon.png
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
