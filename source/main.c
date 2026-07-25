@@ -17,8 +17,9 @@ typedef struct
 
 //populate player data starting values
 PlayerData players[4];
-void initPlayers(void)
+void initPlayers(void *data)
 {
+	(void)data;
 	for (int i = 0; i < 4; i++){
 
 		players[i].life = 40;
@@ -54,7 +55,9 @@ static const char *staticStrings[] = {
 	"+",
 	"-",
 	"Commander Damage",
-	"x"
+	"x",
+	"SETTINGS",
+	"RESET"
 };
 
 C2D_TextBuf textBuffer, dynamicBuffer;
@@ -80,13 +83,13 @@ static void staticTextInit(void)
 void drawBox(int x, int y, int w, int h, int thickness, u32 col)
 {
 	//top arm
-	C2D_DrawRectSolid(x, y, 0.0f, w, thickness - 1, col);
+	C2D_DrawRectSolid(x, y, 0.0f, w, thickness, col);
 	//left arm
-	C2D_DrawRectSolid(x, y, 0.0f, thickness - 1, h, col);
+	C2D_DrawRectSolid(x, y, 0.0f, thickness, h, col);
 	//right arm
-	C2D_DrawRectSolid(x + w - thickness + 1, y, 0.0f, thickness - 1, h, col);
+	C2D_DrawRectSolid(x + w - thickness, y, 0.0f, thickness, h, col);
 	//bottom arm
-	C2D_DrawRectSolid(x, y + h - thickness + 1, 0.0f, w, thickness - 1, col);
+	C2D_DrawRectSolid(x, y + h - thickness, 0.0f, w, thickness, col);
 }
 
 //input reading
@@ -176,18 +179,7 @@ void buttonUpdate(Button buttons[], int count)
 	for (int  i = 0; i < count; i++)
 	{
 		Button* b = &buttons[i];
-		if (held & KEY_TOUCH)
-		{
-			if (buttonContains(b, touch.px, touch.py))
-			{
-				b->pressed = true;
-			}
-			else 
-			{
-				b->pressed = false;
-			}
-		}
-		else
+		if (!(held & KEY_TOUCH))
 		{
 			b->pressed = false;
 		}
@@ -197,6 +189,9 @@ void buttonUpdate(Button buttons[], int count)
 			if (buttonContains(b, touch.px, touch.py))
 			{
 				b->onPress(b->data);
+				b->pressed = true;
+			} else {
+				b->pressed = false;
 			}
 		}
 	}
@@ -236,12 +231,17 @@ void decrimentInt(void *data){
 	(*v)--;
 }
 
-void commanderToggle(void *data){
+void zero(void *data){
 	int *v = data;
-	if ((*v) == 0){
-		(*v) = 1;
-	} else {(*v) = 0;}
+	(*v) = 0;
 }
+
+void settingsToggle(void *data){
+	int *v = data;
+	(*v) = 2;
+}
+
+
 
 int buttonState = 0;
 
@@ -283,14 +283,14 @@ int main(int argc, char **argv)
 	staticTextInit();
 	dynamicBuffer = C2D_TextBufNew(2048);
 
-	initPlayers();
+	initPlayers(NULL);
 
 	//TODO: make buttons in different array 'batches', only draw and update buttons if specific batch is active
 	//make the buttons exist
 	Button buttonsDefault[]={
 		makeButton(//player 1 +
-			10, 10,
-			65, 80,
+			6, 6,
+			73, 60,
 			clrOldRed,
 			clrBrown,
 			0,
@@ -299,8 +299,8 @@ int main(int argc, char **argv)
 			&players[0].life
 		),
 		makeButton(//player 1 -
-			80, 10,
-			65, 80,
+			84, 6,
+			73, 60,
 			clrOldRed,
 			clrBrown,
 			1,
@@ -309,8 +309,8 @@ int main(int argc, char **argv)
 			&players[0].life
 		),
 		makeButton(//player 2 +
-			170, 10,
-			65, 80,
+			163, 6,
+			73, 60,
 			clrOldBlue,
 			clrBrown,
 			0,
@@ -319,8 +319,8 @@ int main(int argc, char **argv)
 			&players[1].life
 		),
 		makeButton(//player 2 -
-			240, 10,
-			65, 80,
+			241, 6,
+			73, 60,
 			clrOldBlue,
 			clrBrown,
 			1,
@@ -329,8 +329,8 @@ int main(int argc, char **argv)
 			&players[1].life
 		),
 		makeButton(//player 3 +
-			10, 100,
-			65, 80,
+			6, 95,
+			73, 60,
 			clrOldWhite,
 			clrBrown,
 			0,
@@ -339,8 +339,8 @@ int main(int argc, char **argv)
 			&players[2].life
 		),
 		makeButton(//player 3 -
-			80, 100,
-			65, 80,
+			84, 95,
+			73, 60,
 			clrOldWhite,
 			clrBrown,
 			1,
@@ -349,8 +349,8 @@ int main(int argc, char **argv)
 			&players[2].life
 		),
 		makeButton(//player 4 +
-			170, 100,
-			65, 80,
+			163, 95,
+			73, 60,
 			clrOldGreen,
 			clrBrown,
 			0,
@@ -359,8 +359,8 @@ int main(int argc, char **argv)
 			&players[3].life
 		),
 		makeButton(//player 4 -
-			240, 100,
-			65, 80,
+			241, 95,
+			73, 60,
 			clrOldGreen,
 			clrBrown,
 			1,
@@ -368,33 +368,61 @@ int main(int argc, char **argv)
 			decrimentInt,
 			&players[3].life
 		),
-		makeButton(//commander damage toggle
+		/*makeButton(//commander damage toggle
 			10, 190,
 			150, 40,
 			clrWhite,
 			clrBrown,
 			2,
 			0.5f,
-			commanderToggle,
+			incrimentInt,
+			&buttonState
+		),*/
+		makeButton(//settings
+			6, SCREEN_HEIGHT - 56,
+			BOTTOM_SCREEN_WIDTH - 12, 50,
+			clrBrown, clrBlack,
+			4, 0.8f,
+			settingsToggle, &buttonState
+		)
+	};
+
+	Button buttonsSettings[]={
+		makeButton(//reset
+			20, 200,
+			100, 20,
+			clrWhite, clrBrown,
+			5, 0.8f,
+			initPlayers, NULL
+		),
+		makeButton(//X button
+			284, 6,
+			30, 30,
+			clrTransRed,
+			clrOldRed,
+			3,
+			1.2f,
+			zero,
 			&buttonState
 		)
 	};
 
 	Button buttonsCDamage[]={
-		makeButton(
+		makeButton(//X button
 			210, 10,
 			20, 20,
 			clrTransRed,
 			clrOldRed,
 			3,
 			1.0f,
-			commanderToggle,
+			zero,
 			&buttonState
 		)
 	};
 
 	int buttonsDefaultSize = sizeof(buttonsDefault)/sizeof(buttonsDefault[0]);
 	int buttonsCDamageSize = sizeof(buttonsCDamage)/sizeof(buttonsCDamage[0]);
+	int buttonsSettingsSize = sizeof(buttonsSettings)/sizeof(buttonsSettings[0]);
 	
 
 	// Main loop
@@ -409,6 +437,8 @@ int main(int argc, char **argv)
 			buttonUpdate(buttonsDefault, buttonsDefaultSize);
 		} else if(buttonState == 1) {
 			buttonUpdate(buttonsCDamage, buttonsCDamageSize);
+		} else if(buttonState == 2) {
+			buttonUpdate(buttonsSettings, buttonsSettingsSize);
 		}
 		
 
@@ -459,19 +489,24 @@ int main(int argc, char **argv)
 		C2D_TargetClear(bottom, clrBlack);
 		C2D_SceneBegin(bottom);
 
+		/*
 		//draw borders
 		drawBox(0, 0, BOTTOM_SCREEN_WIDTH, SCREEN_HEIGHT, 6, clrWhite);
 		C2D_DrawRectSolid((BOTTOM_SCREEN_WIDTH / 2) - 3, 0, 0.0f, 6, SCREEN_HEIGHT, clrWhite);
 		C2D_DrawRectSolid(0, SCREEN_HEIGHT - 62, 0.0f, BOTTOM_SCREEN_WIDTH, 6, clrWhite); //bottom section, 50px high
-		C2D_DrawRectSolid(0, (SCREEN_HEIGHT - 62) / 2, 0.0f, BOTTOM_SCREEN_WIDTH, 6, clrWhite);//main section horiz., 83px high
+		C2D_DrawRectSolid(0, (SCREEN_HEIGHT - 62) / 2, 0.0f, BOTTOM_SCREEN_WIDTH, 6, clrWhite);//main section, 151/83
+		*/
 
 		//draw buttons
 		if (buttonState == 0){
 			buttonDraw(buttonsDefault, buttonsDefaultSize);
 		} else if (buttonState == 1){
 			buttonDraw(buttonsCDamage, buttonsCDamageSize);
+		} else if(buttonState == 2) {
+			buttonDraw(buttonsSettings, buttonsSettingsSize);
 		}
 
+		/*
 		char buf[160];
 		C2D_Text debugText;
 		snprintf(buf, sizeof(buf),
@@ -483,7 +518,7 @@ int main(int argc, char **argv)
 		C2D_TextParse(&debugText, dynamicBuffer, buf);
 		C2D_TextOptimize(&debugText);
 		C2D_DrawText(&debugText, C2D_WithColor, 3.0f, 3.0f, 0.0f, 0.75f, 0.75f, clrWhite);
-		
+		*/
 
 		//C2D_DrawSprite(&sprites[1].spr);
 		
