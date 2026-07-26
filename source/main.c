@@ -93,7 +93,7 @@ void drawBox(int x, int y, int w, int h, int thickness, u32 col)
 }
 
 //input reading
-u32 down, held;
+u32 down, held, up;
 touchPosition touch;
 
 void readInputs(void)
@@ -106,6 +106,7 @@ void readInputs(void)
 	//keys and touchscreen shorthands
 	down = hidKeysDown();
 	held = hidKeysHeld();
+	up = hidKeysUp();
 }
 
 //------------------------------------------------------------------------------------
@@ -129,6 +130,8 @@ typedef struct
 
 	bool pressed;
 } Button;
+
+Button *activeButton = NULL;
 
 Button makeButton(
 	int x,
@@ -176,25 +179,50 @@ bool buttonContains(Button* b, int x, int y)
 
 void buttonUpdate(Button buttons[], int count)
 {
-	for (int  i = 0; i < count; i++)
-	{
-		Button* b = &buttons[i];
-		if (!(held & KEY_TOUCH))
-		{
-			b->pressed = false;
-		}
 
-		if (down & KEY_TOUCH)
-		{
-			if (buttonContains(b, touch.px, touch.py))
+	// Touch just started
+    if (down & KEY_TOUCH)
+    {
+        activeButton = NULL;
+
+        for (int i = 0; i < count; i++)
+        {
+            Button *b = &buttons[i];
+
+            if (buttonContains(b, touch.px, touch.py))
+            {
+                activeButton = b;
+                b->pressed = true;
+            }
+        }
+    }
+
+    // Touch is being held
+    if (held & KEY_TOUCH)
+    {
+        if (activeButton)
+        {
+			if (!buttonContains(activeButton, touch.px, touch.py))
 			{
-				b->onPress(b->data);
-				b->pressed = true;
-			} else {
-				b->pressed = false;
+				activeButton->pressed = false;
 			}
+        }
+    }
+
+    // Touch released
+    if (up & KEY_TOUCH)
+    {
+        if (activeButton && activeButton->pressed)
+        {
+            activeButton->onPress(activeButton->data);
+            activeButton->pressed = false;
+        }
+		if (activeButton)
+		{
+			activeButton->pressed = false;
 		}
-	}
+		activeButton = NULL;
+    }
 }
 
 void buttonDraw(Button buttons[], int count)
