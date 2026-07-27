@@ -54,7 +54,7 @@ void initSprite(int spriteIndex, float x, float y)
 static const char *staticStrings[] = {
 	"+",
 	"-",
-	"Commander Damage",
+	"C. Damage",
 	"x",
 	"SETTINGS",
 	"RESET"
@@ -249,6 +249,10 @@ void buttonDraw(Button buttons[], int count)
 }
 
 //button pressed function(s)
+
+int buttonState = 0;
+int cDamageIndex;
+
 void incrimentInt(void *data){
 	int *v = data;
 	(*v)++;
@@ -269,9 +273,11 @@ void settingsToggle(void *data){
 	(*v) = 2;
 }
 
-
-
-int buttonState = 0;
+void cDamageToggle(void *data){
+	buttonState = 1;
+	int *v = data;
+	cDamageIndex = (*v);
+}
 
 //------------------------------------------------------------------------------------
 //MAIN
@@ -313,12 +319,13 @@ int main(int argc, char **argv)
 
 	initPlayers(NULL);
 
-	//TODO: make buttons in different array 'batches', only draw and update buttons if specific batch is active
 	//make the buttons exist
-	Button buttonsDefault[]={
+
+	int ind[] = {0, 1, 2, 3};
+	Button buttonsDefault[]={// STATE 0
 		makeButton(//player 1 +
 			6, 6,
-			73, 60,
+			73, 50,
 			clrOldRed,
 			clrBrown,
 			0,
@@ -328,7 +335,7 @@ int main(int argc, char **argv)
 		),
 		makeButton(//player 1 -
 			84, 6,
-			73, 60,
+			73, 50,
 			clrOldRed,
 			clrBrown,
 			1,
@@ -338,7 +345,7 @@ int main(int argc, char **argv)
 		),
 		makeButton(//player 2 +
 			163, 6,
-			73, 60,
+			73, 50,
 			clrOldBlue,
 			clrBrown,
 			0,
@@ -348,7 +355,7 @@ int main(int argc, char **argv)
 		),
 		makeButton(//player 2 -
 			241, 6,
-			73, 60,
+			73, 50,
 			clrOldBlue,
 			clrBrown,
 			1,
@@ -358,7 +365,7 @@ int main(int argc, char **argv)
 		),
 		makeButton(//player 3 +
 			6, 95,
-			73, 60,
+			73, 50,
 			clrOldWhite,
 			clrBrown,
 			0,
@@ -368,7 +375,7 @@ int main(int argc, char **argv)
 		),
 		makeButton(//player 3 -
 			84, 95,
-			73, 60,
+			73, 50,
 			clrOldWhite,
 			clrBrown,
 			1,
@@ -378,7 +385,7 @@ int main(int argc, char **argv)
 		),
 		makeButton(//player 4 +
 			163, 95,
-			73, 60,
+			73, 50,
 			clrOldGreen,
 			clrBrown,
 			0,
@@ -388,7 +395,7 @@ int main(int argc, char **argv)
 		),
 		makeButton(//player 4 -
 			241, 95,
-			73, 60,
+			73, 50,
 			clrOldGreen,
 			clrBrown,
 			1,
@@ -396,26 +403,65 @@ int main(int argc, char **argv)
 			decrimentInt,
 			&players[3].life
 		),
-		/*makeButton(//commander damage toggle
-			10, 190,
-			150, 40,
-			clrWhite,
-			clrBrown,
-			2,
-			0.5f,
-			incrimentInt,
-			&buttonState
-		),*/
 		makeButton(//settings
 			6, SCREEN_HEIGHT - 56,
 			BOTTOM_SCREEN_WIDTH - 12, 50,
 			clrBrown, clrBlack,
 			4, 0.8f,
 			settingsToggle, &buttonState
+		),
+		makeButton(//p1 commander damage
+			6, 61,
+			151, 28,
+			clrOldRed,
+			clrBrown,
+			2, 0.8f,
+			cDamageToggle,
+			&ind[0]
+		),
+		makeButton(//p2 commander damage
+			163, 61,
+			151, 28,
+			clrOldBlue,
+			clrBrown,
+			2, 0.8f,
+			cDamageToggle,
+			&ind[1]
+		),
+		makeButton(//p3 commander damage
+			6, 150,
+			151, 28,
+			clrOldWhite,
+			clrBrown,
+			2, 0.8f,
+			cDamageToggle,
+			&ind[2]
+		),
+		makeButton(//p4 commander damage
+			163, 150,
+			151, 28,
+			clrOldGreen,
+			clrBrown,
+			2, 0.8f,
+			cDamageToggle,
+			&ind[3]
 		)
 	};
 
-	Button buttonsSettings[]={
+	Button buttonsCDamage[]={//STATE 1
+		makeButton(//X button
+			284, 6,
+			30, 30,
+			clrTransRed,
+			clrOldRed,
+			3,
+			1.2f,
+			zero,
+			&buttonState
+		)
+	};
+
+	Button buttonsSettings[]={//STATE 2
 		makeButton(//reset
 			20, 200,
 			100, 20,
@@ -430,19 +476,6 @@ int main(int argc, char **argv)
 			clrOldRed,
 			3,
 			1.2f,
-			zero,
-			&buttonState
-		)
-	};
-
-	Button buttonsCDamage[]={
-		makeButton(//X button
-			210, 10,
-			20, 20,
-			clrTransRed,
-			clrOldRed,
-			3,
-			1.0f,
 			zero,
 			&buttonState
 		)
