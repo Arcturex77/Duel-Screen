@@ -710,7 +710,7 @@ int main(int argc, char **argv)
 			buttonDraw(buttonsSettings, buttonsSettingsSize);
 		}
 
-
+		/*
 		char buf[160];
 		C2D_Text debugText;
 		snprintf(buf, sizeof(buf),
@@ -721,7 +721,7 @@ int main(int argc, char **argv)
 		C2D_TextParse(&debugText, dynamicBuffer, buf);
 		C2D_TextOptimize(&debugText);
 		C2D_DrawText(&debugText, C2D_WithColor, 3.0f, 3.0f, 0.0f, 0.75f, 0.75f, clrWhite);
-		
+		*/
 		
 		C3D_FrameEnd(0);
 		
