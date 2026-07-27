@@ -13,6 +13,7 @@
 typedef struct
 {
 	int life, commanderDamage[4];
+	bool dead;
 } PlayerData;
 
 //populate player data starting values
@@ -21,7 +22,8 @@ void initPlayers(void *data)
 {
 	(void)data;
 	for (int i = 0; i < (sizeof(players)/sizeof(players[0])); i++){
-
+		
+		players[i].dead = false;
 		players[i].life = 40;
 		for (int j = 0; j < 4; j++){
 			players[i].commanderDamage[j] = 0;
@@ -40,12 +42,12 @@ typedef struct
 static C2D_SpriteSheet spriteSheet; //create sheet object
 static Sprite sprites[768]; //make sprites array
 
-void initSprite(int spriteIndex, float x, float y)
+void initSprite(int spriteIndex, int sheetIndex, float x, float y)
 {
 	Sprite* sprite = &sprites[spriteIndex];
 
-	C2D_SpriteFromSheet(&sprite->spr, spriteSheet, spriteIndex);
-	C2D_SpriteSetCenter(&sprite->spr, 0.5f, 0.5f);
+	C2D_SpriteFromSheet(&sprite->spr, spriteSheet, sheetIndex);
+	C2D_SpriteSetCenter(&sprite->spr, 0.0f, 0.0f);
 	C2D_SpriteSetPos(&sprite->spr, x, y);
 }
 
@@ -308,8 +310,12 @@ void commanderButton(void *data)
 
     if (b->increment){
         players[cDamageIndex].commanderDamage[b->commander]++;
+		players[cDamageIndex].life--;
 	} else {
         players[cDamageIndex].commanderDamage[b->commander]--;
+		if (players[cDamageIndex].commanderDamage[b->commander] >= 0){
+			players[cDamageIndex].life++;
+		}
 	}
 }
 
@@ -344,8 +350,11 @@ int main(int argc, char **argv)
 	spriteSheet = C2D_SpriteSheetLoad("romfs:/gfx/sprites.t3x");
 	if (!spriteSheet) svcBreak(USERBREAK_PANIC);
 
-	initSprite(0, TOP_SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
-	initSprite(1, 50, 50);
+	initSprite(0, 0, 0, 0);
+	initSprite(1, 2, 40, 0);
+	initSprite(2, 2, 240, 0);
+	initSprite(3, 2, 40, 120);
+	initSprite(4, 2, 240, 120);
 
 	//init text
 	staticTextInit();
@@ -493,80 +502,80 @@ int main(int argc, char **argv)
 			&buttonState
 		),
 		makeButton(//player 1 +
-			6, 26,
-			73, 50,
-			clrOldRed,
+			20, 67,
+			50, 50,
 			clrBrown,
+			clrWhite,
 			0,
 			2.0f,
 			commanderButton,
 			&cButtons[0]
 		),
 		makeButton(//player 1 -
-			84, 26,
-			73, 50,
-			clrOldRed,
+			90, 67,
+			50, 50,
 			clrBrown,
+			clrWhite,
 			1,
 			2.0f,
 			commanderButton,
 			&cButtons[1]
 		),
 		makeButton(//player 2 +
-			163, 26,
-			73, 50,
-			clrOldBlue,
+			180, 67,
+			50, 50,
 			clrBrown,
+			clrWhite,
 			0,
 			2.0f,
 			commanderButton,
 			&cButtons[2]
 		),
 		makeButton(//player 2 -
-			241, 26,
-			73, 50,
-			clrOldBlue,
+			250, 67,
+			50, 50,
 			clrBrown,
+			clrWhite,
 			1,
 			2.0f,
 			commanderButton,
 			&cButtons[3]
 		),
 		makeButton(//player 3 +
-			6, 115,
-			73, 50,
-			clrOldWhite,
+			20, 166,
+			50, 50,
 			clrBrown,
+			clrWhite,
 			0,
 			2.0f,
 			commanderButton,
 			&cButtons[4]
 		),
 		makeButton(//player 3 -
-			84, 115,
-			73, 50,
-			clrOldWhite,
+			90, 166,
+			50, 50,
 			clrBrown,
+			clrWhite,
 			1,
 			2.0f,
 			commanderButton,
 			&cButtons[5]
 		),
 		makeButton(//player 4 +
-			163, 115,
-			73, 50,
-			clrOldGreen,
+			180, 166,
+			50, 50,
 			clrBrown,
+			clrWhite,
 			0,
 			2.0f,
 			commanderButton,
 			&cButtons[6]
 		),
 		makeButton(//player 4 -
-			241, 115,
-			73, 50,
-			clrOldGreen,
+			250, 166,
+			50, 50,
 			clrBrown,
+			clrWhite,
 			1,
 			2.0f,
 			commanderButton,
@@ -576,8 +585,8 @@ int main(int argc, char **argv)
 
 	Button buttonsSettings[]={//STATE 2
 		makeButton(//reset
-			20, 200,
-			100, 20,
+			30, 60,
+			260, 30,
 			clrWhite, clrBrown,
 			5, 0.8f,
 			initPlayers, NULL
@@ -620,6 +629,20 @@ int main(int argc, char **argv)
 			for (int j = 0; j < sizeof(players[i].commanderDamage)/sizeof(players[i].commanderDamage[0]); j++){
 				if (players[i].commanderDamage[j] < 0){
 					players[i].commanderDamage[j] = 0;
+				}
+			}
+		}
+
+		//check death
+		for (int i = 0; i < sizeof(players)/sizeof(players[0]); i++){
+			if (players[i].life <= 0)
+			{
+				players[i].dead = true;
+			}
+			for (int j = 0; j < sizeof(players[i].commanderDamage)/sizeof(players[i].commanderDamage[0]); j++){
+				if (players[i].commanderDamage[j] >= 21)
+				{
+					players[i].dead = true;
 				}
 			}
 		}
@@ -668,12 +691,21 @@ int main(int argc, char **argv)
 		}
 
 		//state machine
-		if (buttonState == 0){//default screen
+		if (buttonState == 0 || buttonState == 2){//default screen and settings
 
 			C2D_DrawText(&playerLifeText[0], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 100.0f, 40.0f, 0.0f, -3.0f, -3.0f, clrBlack);
 			C2D_DrawText(&playerLifeText[1], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 300.0f, 40.0f, 0.0f, -3.0f, -3.0f, clrBlack);
 			C2D_DrawText(&playerLifeText[2], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 100.0f, 200.0f, 0.0f, 3.0f, 3.0f, clrBlack);
 			C2D_DrawText(&playerLifeText[3], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 300.0f, 200.0f, 0.0f, 3.0f, 3.0f, clrBlack);
+
+			for (int i = 0; i < sizeof(players)/sizeof(players[0]); i++)
+			{
+				if (players[i].dead)
+				{
+					C2D_DrawSprite(&sprites[i+1].spr);
+					C2D_DrawRectSolid(coordsIndex[i][0], coordsIndex[i][1], 0.0f, 200, 120, C2D_Color32(0, 0, 0, 80));
+				}
+			}
 
 		} else if (buttonState == 1){//C damage
 
@@ -685,12 +717,6 @@ int main(int argc, char **argv)
 			C2D_DrawText(&playerCDamageText[2], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 100.0f, 200.0f, 0.0f, 3.0f, 3.0f, clrOldWhite);
 			C2D_DrawText(&playerCDamageText[3], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 300.0f, 200.0f, 0.0f, 3.0f, 3.0f, clrOldGreen);
 
-		} else if(buttonState == 2) {//settings
-
-			C2D_DrawText(&playerLifeText[0], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 100.0f, 40.0f, 0.0f, -3.0f, -3.0f, clrBlack);
-			C2D_DrawText(&playerLifeText[1], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 300.0f, 40.0f, 0.0f, -3.0f, -3.0f, clrBlack);
-			C2D_DrawText(&playerLifeText[2], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 100.0f, 200.0f, 0.0f, 3.0f, 3.0f, clrBlack);
-			C2D_DrawText(&playerLifeText[3], C2D_WithColor | C2D_AtBaseline | C2D_AlignCenter, 300.0f, 200.0f, 0.0f, 3.0f, 3.0f, clrBlack);
 		}
 		
 		
@@ -705,6 +731,13 @@ int main(int argc, char **argv)
 		if (buttonState == 0){//default screen
 			buttonDraw(buttonsDefault, buttonsDefaultSize);
 		} else if (buttonState == 1){//C damage
+			
+			C2D_DrawRectSolid(0.0f, 42.0f, 0.0f, 160.0f, 99.0f, clrOldRed);
+			C2D_DrawRectSolid(160.0f, 42.0f, 0.0f, 160.0f, 99.0f, clrOldBlue);
+			C2D_DrawRectSolid(0.0f, 141.0f, 0.0f, 160.0f, 99.0f, clrOldWhite);
+			C2D_DrawRectSolid(160.0f, 141.0f, 0.0f, 160.0f, 99.0f, clrOldGreen);
+
+
 			buttonDraw(buttonsCDamage, buttonsCDamageSize);
 		} else if(buttonState == 2) {//settings
 			buttonDraw(buttonsSettings, buttonsSettingsSize);
